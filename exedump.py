@@ -134,8 +134,8 @@ def browse_file():
         unpy2exe(filename, output_dir='.', decompile=True)
 
 root = tk.Tk()
-root.title("@snootysteppes on github")
-button = tk.Button(root, text="Browse", command=browse_file)
+root.title("@snootysteppes on Github")
+button = tk.Button(root, text="Browse files", command=browse_file)
 button.pack()
 
 root.mainloop()
