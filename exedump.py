@@ -152,7 +152,7 @@ root.title("py2exe | @snootysteppes")
 frame = tk.Frame(root)
 frame.pack(padx=20, pady=20)
 
-button = tk.Button(frame, text="Browse files", command=browse_file)
+button = tk.Button(frame, text="Add .exe", command=browse_file)
 button.grid(row=0, column=0, padx=10, pady=10)
 
 # Version selector
