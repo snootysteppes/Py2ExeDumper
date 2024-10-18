@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-import argparse
 import imp
 import marshal
 import os
@@ -78,10 +77,11 @@ def get_co_from_dump(data):
     return marshal.loads(code_bytes)
 
 def save_co_to_pyc(co, version, output_dir):
-    """Save the code object as a pyc file."""
+    """Save the code object as a pyc file with a unique name."""
     pyc_header = version + __timestamp()
     pyc_basename = os.path.basename(co.co_filename)
-    pyc_name = f"{pyc_basename}.pyc"
+    timestamp = time.strftime("%Y%m%d_%H%M%S")  # Unique timestamp
+    pyc_name = f"{timestamp}_{pyc_basename}.pyc"
 
     if pyc_name not in IGNORE:
         print(f"Extracting {pyc_name}")
@@ -94,7 +94,7 @@ def save_co_to_pyc(co, version, output_dir):
 
 def decompile_pyc(pyc_filename, output_dir):
     """Decompile the pyc file to Python source code."""
-    py_filename = pyc_filename[:-1]  # remove the 'c' from '.pyc'
+    py_filename = os.path.join(output_dir, os.path.basename(pyc_filename[:-1]))  # remove the 'c' from '.pyc'
     with open(py_filename, 'w') as py_file:
         uncompyle6.decompile_file(pyc_filename, py_file)
 
@@ -130,6 +130,7 @@ def unpy2exe(filename, python_version=None, output_dir=None, decompile=False, pr
             step += 1
             if progress_bar:
                 progress_bar["value"] = (step / total) * 100
+                progress_bar["text"] = f"Extracting: {os.path.basename(pyc_filename)}"
                 root.update_idletasks()
 
         messagebox.showinfo("Success", "Extraction completed successfully!")
@@ -152,23 +153,47 @@ root.title("py2exe | @snootysteppes")
 frame = tk.Frame(root)
 frame.pack(padx=20, pady=20)
 
+# Button to add .exe
 button = tk.Button(frame, text="Add .exe", command=browse_file)
 button.grid(row=0, column=0, padx=10, pady=10)
+button.tooltip = "Browse for a .exe file to extract Python scripts."
 
 # Version selector
 tk.Label(frame, text="Python Version:").grid(row=1, column=0, padx=10, pady=10, sticky="w")
 version_combobox = ttk.Combobox(frame, values=list(versions.keys()), state="readonly")
 version_combobox.set('2.7')  # Set default version
 version_combobox.grid(row=1, column=1, padx=10, pady=10)
+version_combobox.tooltip = "Select the Python version used to build the .exe."
 
 # Decompile option
 decompile_var = tk.BooleanVar()
 decompile_check = tk.Checkbutton(frame, text="Decompile", variable=decompile_var)
 decompile_check.grid(row=2, column=0, padx=10, pady=10)
+decompile_check.tooltip = "Check to decompile extracted .pyc files to .py."
 
 # Progress bar
 progress = ttk.Progressbar(frame, orient="horizontal", length=200, mode="determinate")
 progress.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
 
+# Add tooltip support for buttons and labels
+def create_tooltip(widget, text):
+    tooltip = tk.Toplevel(widget)
+    tooltip.wm_overrideredirect(True)
+    tooltip.wm_geometry(f"+{widget.winfo_rootx()+20}+{widget.winfo_rooty()+20}")
+    label = tk.Label(tooltip, text=text, background="yellow")
+    label.pack()
+
+    def hide_tooltip(event):
+        tooltip.withdraw()
+        
+    widget.bind("<Enter>", lambda event: tooltip.deiconify())
+    widget.bind("<Leave>", hide_tooltip)
+
+# Create tooltips
+create_tooltip(button, button.tooltip)
+create_tooltip(version_combobox, version_combobox.tooltip)
+create_tooltip(decompile_check, decompile_check.tooltip)
+
 # Start the GUI main loop
 root.mainloop()
+
